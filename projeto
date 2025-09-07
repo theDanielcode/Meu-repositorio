@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Chat Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        .message-you {
+            background-color: #dcf8c6;
+            border-radius: 7.5px 0 7.5px 7.5px;
+            align-self: flex-end;
+        }
+        .message-other {
+            background-color: white;
+            border-radius: 0 7.5px 7.5px 7.5px;
+            align-self: flex-start;
+        }
+        .chat-container {
+            height: calc(100vh - 120px);
+        }
+        .time-stamp {
+            font-size: 11px;
+            color: #667781;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+        }
+        .toggle-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .message:hover .toggle-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex flex-col h-screen">
+        <!-- Header -->
+        <div class="bg-[#075e54] text-white p-3 flex items-center justify-between shadow-md">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-gray-300 mr-3 overflow-hidden">
+                    <img src="http://static.photos/people/200x200/1" alt="Profile" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h1 class="font-semibold">John Doe</h1>
+                    <p class="text-xs opacity-80">online</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <i data-feather="phone" class="cursor-pointer"></i>
+                <i data-feather="video" class="cursor-pointer"></i>
+                <i data-feather="more-vertical" class="cursor-pointer"></i>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-container overflow-y-auto p-4 flex flex-col space-y-2 flex-grow bg-[#e5ddd5] bg-opacity-30 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_a4be512e7195b6b733d9110b408f075d.png')]">
+            <div id="messages-container" class="space-y-2">
+                <!-- Messages will be added here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-white p-3 flex items-center border-t border-gray-200">
+            <button class="p-2 text-gray-500 hover:text-gray-700">
+                <i data-feather="smile"></i>
+            </button>
+            <input type="text" id="message-input" placeholder="Type a message" class="flex-grow mx-3 py-2 px-4 rounded-full bg-gray-100 focus:outline-none focus:ring-1 focus:ring-green-500">
+            <button id="send-btn" class="p-2 text-gray-500 hover:text-gray-700">
+                <i data-feather="send"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            
+            // Sample initial messages
+            const initialMessages = [
+                { text: "Hey there!", time: "10:30 AM", isYou: false },
+                { text: "Hi! How are you?", time: "10:31 AM", isYou: true },
+                { text: "I'm good, thanks! How about you?", time: "10:32 AM", isYou: false },
+                { text: "Pretty good! Just working on some projects.", time: "10:33 AM", isYou: true }
+            ];
+            
+            const messagesContainer = document.getElementById('messages-container');
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            
+            // Add initial messages
+            initialMessages.forEach(msg => {
+                addMessage(msg.text, msg.time, msg.isYou);
+            });
+            
+            // Send message on button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            function sendMessage() {
+                const text = messageInput.value.trim();
+                if (text) {
+                    const now = new Date();
+                    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    addMessage(text, time, true);
+                    messageInput.value = '';
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }
+            
+            function addMessage(text, time, isYou) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message flex ${isYou ? 'justify-end' : 'justify-start'}`;
+                
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 ${isYou ? 'message-you' : 'message-other'} shadow-sm relative">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-grow">
+                                <p class="text-gray-800">${text}</p>
+                                <div class="time-stamp">
+                                    <span>${time}</span>
+                                    ${isYou ? '<i data-feather="check" class="ml-1" style="width: 12px; height: 12px;"></i>' : ''}
+                                </div>
+                            </div>
+                            <button class="toggle-btn ml-2 text-gray-500 hover:text-gray-700" onclick="toggleMessageSide(this)">
+                                <i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+                feather.replace();
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            
+            // Make toggle function available globally
+            window.toggleMessageSide = function(button) {
+                const messageDiv = button.closest('.message');
+                const messageBubble = messageDiv.querySelector('div > div');
+                
+                if (messageBubble.classList.contains('message-you')) {
+                    messageBubble.classList.remove('message-you');
+                    messageBubble.classList.add('message-other');
+                    messageDiv.classList.remove('justify-end');
+                    messageDiv.classList.add('justify-start');
+                    
+                    // Remove check mark
+                    const checkIcon = messageBubble.querySelector('i[data-feather="check"]');
+                    if (checkIcon) checkIcon.remove();
+                } else {
+                    messageBubble.classList.remove('message-other');
+                    messageBubble.classList.add('message-you');
+                    messageDiv.classList.remove('justify-start');
+                    messageDiv.classList.add('justify-end');
+                    
+                    // Add check mark
+                    const timeStamp = messageBubble.querySelector('.time-stamp');
+                    if (timeStamp) {
+                        const checkIcon = document.createElement('i');
+                        checkIcon.setAttribute('data-feather', 'check');
+                        checkIcon.style.width = '12px';
+                        checkIcon.style.height = '12px';
+                        checkIcon.classList.add('ml-1');
+                        timeStamp.appendChild(checkIcon);
+                        feather.replace();
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>
